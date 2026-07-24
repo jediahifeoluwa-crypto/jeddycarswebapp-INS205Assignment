@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="doc-title">Vehicle Details — Jeddy Cars</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="page-loader"><div class="loader-mark"><svg viewBox="0 0 64 64"><circle class="loader-ring" cx="32" cy="32" r="26"/><circle class="loader-arc" cx="32" cy="32" r="26"/></svg></div><div class="loader-text">Jeddy Cars</div></div>
+<div id="site-nav"></div>
+
+<main id="vehicle-main">
+  <div class="container">
+    <div class="breadcrumb" id="crumb"><a href="index.html">Home</a><span class="sep">/</span><a href="inventory.html">Inventory</a><span class="sep">/</span><span id="crumb-name">…</span></div>
+  </div>
+
+  <section class="container" id="vd-content" style="padding-bottom:80px;">
+    <!-- populated by JS -->
+  </section>
+
+  <section class="section" style="border-top:1px solid var(--hairline);">
+    <div class="container">
+      <div class="section-head reveal">
+        <div><div class="section-eyebrow">You Might Also Like</div><h2 class="section-title">Similar Vehicles</h2></div>
+      </div>
+      <div class="grid grid-4" id="similar-grid"></div>
+    </div>
+  </section>
+</main>
+
+<div id="site-footer"></div>
+
+<!-- Reserve / Booking modal -->
+<div class="modal-overlay" id="action-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeActionModal()">&times;</button>
+    <h3 id="modal-title" class="font-display" style="font-size:22px; margin-bottom:6px;"></h3>
+    <p id="modal-sub" style="color:var(--ink-dim); font-size:14px; margin-bottom:22px;"></p>
+    <form id="modal-form" onsubmit="submitActionModal(event)">
+      <div class="form-group"><label>Full Name</label><input required type="text"></div>
+      <div class="form-row-2">
+        <div class="form-group"><label>Email</label><input required type="email"></div>
+        <div class="form-group"><label>Phone</label><input required type="tel"></div>
+      </div>
+      <div class="form-group" id="modal-date-group"><label>Preferred Date</label><input type="date"></div>
+      <button class="btn btn-gold btn-block" type="submit" id="modal-submit-btn">Confirm</button>
+    </form>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script>
+const params = new URLSearchParams(location.search);
+const vehicle = findVehicle(params.get('id')) || VEHICLES[0];
+let galleryIndex = 0;
+
+document.title = `${vehicle.brand} ${vehicle.model} — Jeddy Cars`;
+document.getElementById('crumb-name').textContent = `${vehicle.brand} ${vehicle.model}`;
+
+function renderVehicle(){
+  const v = vehicle;
+  const fav = isWishlisted(v.id);
+  const availClass = v.status==='available'?'available':v.status==='reserved'?'reserved':'sold';
+  const availLabel = v.status==='available'?'Available Now':v.status==='reserved'?'Reserved':'Sold';
+
+  document.getElementById('vd-content').innerHTML = `
+  <div class="vd-layout">
+    <div>
+      <div class="bracket-frame gallery-main" id="gallery-main" onclick="this.classList.toggle('zoomed')">
+        <span class="bk-tr"></span><span class="bk-bl"></span>
+        <img id="gallery-img" src="${v.images[0]}" alt="${v.brand} ${v.model}">
+      </div>
+      <div class="gallery-thumbs" id="gallery-thumbs">
+        ${v.images.map((img,i)=>`<img src="${img}" class="${i===0?'active':''}" onclick="setGalleryImage(${i})">`).join('')}
+      </div>
+      <div class="viewer360">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 4 5.5 4 9s-1.5 6.5-4 9c-2.5-2.5-4-5.5-4-9s1.5-6.5 4-9z"/></svg>
+        <div>360° interactive viewer — drag to rotate <em>(placeholder: full 360° capture rolling out per-vehicle)</em></div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('overview',this)">Overview</button>
+        <button class="tab-btn" onclick="showTab('specs',this)">Specifications</button>
+        <button class="tab-btn" onclick="showTab('features',this)">Features</button>
+      </div>
+      <div class="tab-panel active" id="tab-overview">
+        <p style="color:var(--ink-dim); line-height:1.8; font-size:15.5px;">${v.description}</p>
+        <div class="dyno">
+          <div class="dyno-row">
+            <div class="dyno-label"><span>Horsepower</span><b>${v.horsepower} hp</b></div>
+            <div class="dyno-bar"><div class="dyno-fill" id="dyno-hp" style="width:0"></div></div>
+          </div>
+          <div class="dyno-row">
+            <div class="dyno-label"><span>Est. 0–60 mph responsiveness</span><b>${estZeroSixty(v.horsepower)}s</b></div>
+            <div class="dyno-bar"><div class="dyno-fill" id="dyno-accel" style="width:0"></div></div>
+          </div>
+          <div class="dyno-row">
+            <div class="dyno-label"><span>Efficiency Index</span><b>${efficiencyIndex(v.fuel)}</b></div>
+            <div class="dyno-bar"><div class="dyno-fill" id="dyno-eff" style="width:0"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="tab-panel" id="tab-specs">
+        <table class="spec-table">
+          <tr><td>VIN</td><td class="vin">${v.vin}</td></tr>
+          <tr><td>Year</td><td>${v.year}</td></tr>
+          <tr><td>Mileage</td><td>${fmtMileage(v.mileage)}</td></tr>
+          <tr><td>Body Type</td><td>${v.body}</td></tr>
+          <tr><td>Condition</td><td>${v.condition}</td></tr>
+          <tr><td>Engine</td><td>${v.engine}</td></tr>
+          <tr><td>Horsepower</td><td>${v.horsepower} hp</td></tr>
+          <tr><td>Drivetrain</td><td>${v.drivetrain}</td></tr>
+          <tr><td>Transmission</td><td>${v.transmission}</td></tr>
+          <tr><td>Fuel Type</td><td>${v.fuel}</td></tr>
+          <tr><td>Exterior Color</td><td>${v.exterior}</td></tr>
+          <tr><td>Interior Color</td><td>${v.interior}</td></tr>
+        </table>
+      </div>
+      <div class="tab-panel" id="tab-features">
+        <div class="feature-tags">${v.features.map(f=>`<span>${f}</span>`).join('')}</div>
+      </div>
+    </div>
+
+    <div class="vd-sticky">
+      <div class="car-brand">${v.brand}</div>
+      <div class="vd-title-row">
+        <h1 class="font-display" style="font-size:30px;">${v.model}</h1>
+        <button class="car-fav ${fav?'active':''}" style="position:static;" data-fav="${v.id}" onclick="toggleWishlist('${v.id}')">
+          <svg viewBox="0 0 24 24" fill="${fav?'currentColor':'none'}" stroke="currentColor" width="18" height="18">${ICONS.heart}</svg>
+        </button>
+      </div>
+      <span class="availability ${availClass}">● ${availLabel}</span>
+      <div class="vd-price-big">${fmtPrice(v.price)}</div>
+      <p style="color:var(--ink-dim); font-size:13.5px;">Estimated at ${fmtPrice(Math.round(calcMonthlyPayment(v.price,20,6.9,60)))}/mo · 20% down · 60 mo · 6.9% APR</p>
+
+      <div class="vd-actions">
+        <button class="btn btn-gold btn-block" onclick="openActionModal('buy')" ${v.status==='sold'?'disabled':''}>Buy Now</button>
+        <button class="btn btn-outline btn-block" onclick="openActionModal('reserve')" ${v.status!=='available'?'disabled':''}>Reserve Vehicle</button>
+        <button class="btn btn-outline btn-block" onclick="openActionModal('inspect')">Book Inspection</button>
+        <div class="vd-actions-row">
+          <button class="btn btn-ghost" style="flex:1;" data-compare-btn="${v.id}" onclick="toggleCompare('${v.id}')">+ Compare</button>
+          <button class="btn btn-ghost" style="flex:1;" onclick="shareVehicle()">Share</button>
+          <button class="btn btn-ghost" style="flex:1;" onclick="openActionModal('contact')">Contact Dealer</button>
+        </div>
+      </div>
+
+      <div style="margin-top:28px; padding-top:22px; border-top:1px solid var(--hairline);">
+        <h4 style="font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-dim); margin-bottom:14px;">Quick Financing Estimate</h4>
+        <div class="slider-row">
+          <div class="row-top"><span>Down Payment</span><strong id="vd-down-label">20%</strong></div>
+          <input type="range" id="vd-down" min="0" max="60" value="20">
+        </div>
+        <div class="slider-row">
+          <div class="row-top"><span>Term</span><strong id="vd-term-label">60 mo</strong></div>
+          <input type="range" id="vd-term" min="24" max="84" step="12" value="60">
+        </div>
+        <div class="finance-result" style="padding:18px;">
+          <div class="amount" style="font-size:26px;" id="vd-monthly">$0</div>
+          <div class="label">Est. Monthly Payment</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+  animateDyno();
+}
+
+function estZeroSixty(hp){ return Math.max(2.0, (7000/hp)).toFixed(1); }
+function efficiencyIndex(fuel){ return {Electric:'Excellent', Hybrid:'Very Good', 'Petrol Hybrid':'Good', Diesel:'Good', Petrol:'Standard'}[fuel] || 'Standard'; }
+function animateDyno(){
+  requestAnimationFrame(()=>{
+    const hpPct = Math.min(100, (vehicle.horsepower/1050)*100);
+    const accelPct = Math.min(100, (7/estZeroSixty(vehicle.horsepower))*100);
+    const effMap = {Excellent:95, 'Very Good':78, Good:60, Standard:42};
+    const effPct = effMap[efficiencyIndex(vehicle.fuel)];
+    document.getElementById('dyno-hp').style.width = hpPct+'%';
+    document.getElementById('dyno-accel').style.width = accelPct+'%';
+    document.getElementById('dyno-eff').style.width = effPct+'%';
+  });
+}
+
+function setGalleryImage(i){
+  galleryIndex = i;
+  document.getElementById('gallery-img').src = vehicle.images[i];
+  document.querySelectorAll('#gallery-thumbs img').forEach((img,idx)=>img.classList.toggle('active', idx===i));
+}
+function showTab(name, btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+}
+function shareVehicle(){
+  if(navigator.share){ navigator.share({title:`${vehicle.brand} ${vehicle.model}`, url:location.href}); }
+  else { navigator.clipboard.writeText(location.href); toast('Link copied to clipboard'); }
+}
+
+let modalAction = '';
+function openActionModal(action){
+  modalAction = action;
+  const titles = { buy:'Buy Now', reserve:'Reserve This Vehicle', inspect:'Book an Inspection', contact:'Contact Dealer' };
+  const subs = {
+    buy:`Start the purchase process for the ${vehicle.brand} ${vehicle.model}. Our team will follow up to complete paperwork and delivery.`,
+    reserve:`Reserve the ${vehicle.brand} ${vehicle.model} with a fully refundable deposit for 48 hours.`,
+    inspect:`Book a hands-on inspection at our showroom or request a mobile inspection.`,
+    contact:`Send a message straight to the vehicle specialist handling this listing.`
+  };
+  document.getElementById('modal-title').textContent = titles[action];
+  document.getElementById('modal-sub').textContent = subs[action];
+  document.getElementById('modal-date-group').style.display = (action==='inspect') ? 'block' : 'none';
+  document.getElementById('modal-submit-btn').textContent = titles[action];
+  document.getElementById('action-modal').classList.add('show');
+}
+function closeActionModal(){ document.getElementById('action-modal').classList.remove('show'); }
+function submitActionModal(e){
+  e.preventDefault();
+  closeActionModal();
+  const messages = {
+    buy:'Purchase request received — our team will contact you within the hour.',
+    reserve:'Vehicle reserved for 48 hours. Confirmation sent to your email.',
+    inspect:'Inspection booked. We\'ll confirm your slot shortly.',
+    contact:'Message sent to the dealer.'
+  };
+  toast(messages[modalAction]);
+  e.target.reset();
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  renderVehicle();
+  trackRecentlyViewed(vehicle.id);
+  renderGrid('similar-grid', similarVehicles(vehicle));
+
+  const $ = id=>document.getElementById(id);
+  function updateVdFinance(){
+    const down = +$('vd-down').value, term = +$('vd-term').value;
+    $('vd-down-label').textContent = down+'%';
+    $('vd-term-label').textContent = term+' mo';
+    $('vd-monthly').textContent = fmtPrice(Math.round(calcMonthlyPayment(vehicle.price, down, 6.9, term)));
+  }
+  $('vd-down').addEventListener('input', updateVdFinance);
+  $('vd-term').addEventListener('input', updateVdFinance);
+  updateVdFinance();
+});
+</script>
+</body>
+</html>

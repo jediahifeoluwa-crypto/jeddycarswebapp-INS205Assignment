@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jeddy Cars — Premium Automobile Marketplace</title>
+<meta name="description" content="Jeddy Cars is a premium online marketplace for luxury and affordable vehicles — browse, finance, reserve, and buy with confidence.">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="page-loader">
+  <div class="loader-mark">
+    <svg viewBox="0 0 64 64">
+      <circle class="loader-ring" cx="32" cy="32" r="26"/>
+      <circle class="loader-arc" cx="32" cy="32" r="26"/>
+    </svg>
+  </div>
+  <div class="loader-text">Jeddy Cars</div>
+</div>
+
+<div id="site-nav"></div>
+
+<main>
+
+  <!-- HERO -->
+  <section class="hero" id="hero">
+    <div class="hero-slide active" style="background-image:url('https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?auto=format&fit=crop&w=1800&q=80')"></div>
+    <div class="hero-slide" style="background-image:url('https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1800&q=80')"></div>
+    <div class="hero-slide" style="background-image:url('https://images.unsplash.com/photo-1554744512-d6c603f27c54?auto=format&fit=crop&w=1800&q=80')"></div>
+    <div class="hero-slide" style="background-image:url('https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=1800&q=80')"></div>
+    <div class="container hero-content">
+      <div class="eyebrow">The Jeddy Standard · Est. 2026</div>
+      <h1 class="hero-title">Engineered for those who <em>refuse</em> ordinary.</h1>
+      <p class="hero-sub">From the Autobahn to the boulevard — browse a curated fleet of luxury and performance vehicles, backed by transparent financing and white-glove delivery.</p>
+      <div class="hero-cta">
+        <a href="inventory.html" class="btn btn-gold">Browse Inventory</a>
+        <a href="finance.html" class="btn btn-outline">Estimate Financing</a>
+      </div>
+    </div>
+    <div class="hero-dots" id="hero-dots"></div>
+  </section>
+
+  <!-- SEARCH DOCK -->
+  <div class="container search-dock">
+    <form class="search-card" id="home-search" onsubmit="return goSearch(event)">
+      <div class="field">
+        <label>Make / Keyword</label>
+        <input type="text" id="s-keyword" placeholder="e.g. Mercedes-Benz, GLE, Model S">
+      </div>
+      <div class="field">
+        <label>Body Type</label>
+        <select id="s-body"><option value="">Any</option></select>
+      </div>
+      <div class="field">
+        <label>Max Price</label>
+        <select id="s-price">
+          <option value="">Any</option>
+          <option value="30000">Under $30,000</option>
+          <option value="60000">Under $60,000</option>
+          <option value="100000">Under $100,000</option>
+          <option value="200000">Under $200,000</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Condition</label>
+        <select id="s-condition"><option value="">Any</option><option>New</option><option>Used</option></select>
+      </div>
+      <button class="btn btn-gold" type="submit">Search</button>
+    </form>
+  </div>
+
+  <!-- STATS -->
+  <section class="stats-strip section-tight reveal">
+    <div class="stat"><div class="stat-num">2,400+</div><div class="stat-label">Vehicles Delivered</div></div>
+    <div class="stat"><div class="stat-num">98%</div><div class="stat-label">Client Satisfaction</div></div>
+    <div class="stat"><div class="stat-num">18</div><div class="stat-label">Luxury Brands</div></div>
+    <div class="stat"><div class="stat-num">24/7</div><div class="stat-label">Concierge Support</div></div>
+  </section>
+
+  <!-- FEATURED -->
+  <section class="section">
+    <div class="container">
+      <div class="section-head reveal">
+        <div>
+          <div class="section-eyebrow">Handpicked</div>
+          <h2 class="section-title">Featured Vehicles</h2>
+          <p class="section-desc">A rotating selection of our most requested vehicles, chosen weekly by our showroom curators.</p>
+        </div>
+        <a href="inventory.html" class="btn btn-outline">View All Inventory</a>
+      </div>
+      <div class="grid grid-4" id="featured-grid"></div>
+    </div>
+  </section>
+
+  <!-- NEW ARRIVALS -->
+  <section class="section" style="background:var(--obsidian-2);">
+    <div class="container">
+      <div class="section-head reveal">
+        <div>
+          <div class="section-eyebrow">Just Landed</div>
+          <h2 class="section-title">New Arrivals</h2>
+        </div>
+        <a href="inventory.html?tag=new" class="btn btn-outline">See New Stock</a>
+      </div>
+      <div class="grid grid-4" id="new-grid"></div>
+    </div>
+  </section>
+
+  <!-- BESTSELLERS -->
+  <section class="section">
+    <div class="container">
+      <div class="section-head reveal">
+        <div>
+          <div class="section-eyebrow">Fan Favorites</div>
+          <h2 class="section-title">Best-Selling Cars</h2>
+        </div>
+        <a href="inventory.html?tag=bestseller" class="btn btn-outline">See Bestsellers</a>
+      </div>
+      <div class="grid grid-4" id="bestseller-grid"></div>
+    </div>
+  </section>
+
+  <!-- BRANDS -->
+  <section class="section" style="background:var(--obsidian-2); border-top:1px solid var(--hairline); border-bottom:1px solid var(--hairline);">
+    <div class="container text-center">
+      <div class="section-eyebrow reveal">In The Showroom</div>
+      <h2 class="section-title reveal" style="margin-bottom:36px;">Luxury Brands We Carry</h2>
+      <div class="brand-strip reveal" id="brand-strip"></div>
+    </div>
+  </section>
+
+  <!-- FINANCING -->
+  <section class="section">
+    <div class="container">
+      <div class="section-head reveal">
+        <div>
+          <div class="section-eyebrow">Own It Sooner</div>
+          <h2 class="section-title">Estimate Your Financing</h2>
+          <p class="section-desc">Move a few sliders and see a real monthly payment estimate — no signup required.</p>
+        </div>
+      </div>
+      <div class="finance-card reveal">
+        <div>
+          <div class="slider-row">
+            <div class="row-top"><span>Vehicle Price</span><strong id="fp-price-label">$75,000</strong></div>
+            <input type="range" id="fp-price" min="20000" max="200000" step="1000" value="75000">
+          </div>
+          <div class="slider-row">
+            <div class="row-top"><span>Down Payment</span><strong id="fp-down-label">20%</strong></div>
+            <input type="range" id="fp-down" min="0" max="60" step="1" value="20">
+          </div>
+          <div class="slider-row">
+            <div class="row-top"><span>Interest Rate (APR)</span><strong id="fp-apr-label">6.9%</strong></div>
+            <input type="range" id="fp-apr" min="2" max="15" step="0.1" value="6.9">
+          </div>
+          <div class="slider-row">
+            <div class="row-top"><span>Loan Term</span><strong id="fp-term-label">60 months</strong></div>
+            <input type="range" id="fp-term" min="24" max="84" step="12" value="60">
+          </div>
+        </div>
+        <div class="finance-result">
+          <div class="amount" id="fp-monthly">$0</div>
+          <div class="label">Estimated Monthly Payment</div>
+          <div class="finance-breakdown">
+            <div>Down Payment<b id="fp-down-amt">$0</b></div>
+            <div>Loan Amount<b id="fp-loan-amt">$0</b></div>
+            <div>Total Interest<b id="fp-interest-amt">$0</b></div>
+          </div>
+          <a href="finance.html" class="btn btn-gold btn-block" style="margin-top:22px;">Full Finance Application</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section class="section" style="background:var(--obsidian-2); border-top:1px solid var(--hairline); border-bottom:1px solid var(--hairline);">
+    <div class="container">
+      <div class="section-head reveal">
+        <div><div class="section-eyebrow">Client Stories</div><h2 class="section-title">What Our Clients Say</h2></div>
+      </div>
+      <div class="grid grid-3">
+        <div class="testimonial-card reveal">
+          <div class="stars">★★★★★</div>
+          <p class="testimonial-quote">The financing calculator gave me an exact number before I even walked in. No surprises, no pressure — just a clean process.</p>
+          <div class="testimonial-person"><div class="avatar">A.O</div><div><div class="person-name">Amaka O.</div><div class="person-role">G-Wagon Owner</div></div></div>
+        </div>
+        <div class="testimonial-card reveal">
+          <div class="stars">★★★★★</div>
+          <p class="testimonial-quote">I compared four SUVs side by side on the site before booking an inspection. Saved me an entire weekend of dealership hopping.</p>
+          <div class="testimonial-person"><div class="avatar">D.K</div><div><div class="person-name">David K.</div><div class="person-role">Range Rover Sport Owner</div></div></div>
+        </div>
+        <div class="testimonial-card reveal">
+          <div class="stars">★★★★★</div>
+          <p class="testimonial-quote">Reserved the M4 online, picked it up two days later. The whole team made a big purchase feel effortless.</p>
+          <div class="testimonial-person"><div class="avatar">T.N</div><div><div class="person-name">Tunde N.</div><div class="person-role">BMW M4 Owner</div></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NEWS -->
+  <section class="section">
+    <div class="container">
+      <div class="section-head reveal">
+        <div><div class="section-eyebrow">The Journal</div><h2 class="section-title">Latest Automotive News</h2></div>
+      </div>
+      <div class="grid grid-3">
+        <a href="#" class="news-card reveal">
+          <div class="news-media"><img src="https://images.unsplash.com/photo-1517134191118-9d595e4c8c2b?auto=format&fit=crop&w=800&q=80" alt="EV charging"></div>
+          <div class="news-body"><div class="news-date">July 12, 2026</div><h3 class="news-title">Electric flagships are closing the range gap with combustion</h3></div>
+        </a>
+        <a href="#" class="news-card reveal">
+          <div class="news-media"><img src="https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=800&q=80" alt="Luxury interior"></div>
+          <div class="news-body"><div class="news-date">July 6, 2026</div><h3 class="news-title">Inside the new wave of ambient-lit, screen-first cabins</h3></div>
+        </a>
+        <a href="#" class="news-card reveal">
+          <div class="news-media"><img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80" alt="Performance car"></div>
+          <div class="news-body"><div class="news-date">June 28, 2026</div><h3 class="news-title">Why performance coupes are getting quieter — and faster</h3></div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- NEWSLETTER -->
+  <section class="section-tight">
+    <div class="container">
+      <div class="newsletter reveal">
+        <div class="section-eyebrow">Stay Ahead</div>
+        <h2 class="section-title">Get early access to new arrivals & flash sales</h2>
+        <form class="newsletter-form" onsubmit="event.preventDefault(); toast('Subscribed! Check your inbox for confirmation.'); this.reset();">
+          <input type="email" required placeholder="you@email.com">
+          <button class="btn btn-gold" type="submit">Subscribe</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div id="site-footer"></div>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script>
+  // fill in body type dropdown
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const bodySel = document.getElementById('s-body');
+    BODY_TYPES.forEach(b=> bodySel.insertAdjacentHTML('beforeend', `<option>${b}</option>`));
+
+    renderGrid('featured-grid', VEHICLES.filter(v=>v.featured).slice(0,4));
+    renderGrid('new-grid', VEHICLES.filter(v=>v.tag==='new').slice(0,4));
+    renderGrid('bestseller-grid', VEHICLES.filter(v=>v.bestseller).slice(0,4));
+
+    const brandHost = document.getElementById('brand-strip');
+    BRANDS.forEach(b=> brandHost.insertAdjacentHTML('beforeend', `<a href="inventory.html?brand=${encodeURIComponent(b)}" class="brand-pill">${b}</a>`));
+
+    // hero slideshow
+    const slides = document.querySelectorAll('.hero-slide');
+    const dotsHost = document.getElementById('hero-dots');
+    slides.forEach((s,i)=> dotsHost.insertAdjacentHTML('beforeend', `<button data-i="${i}" class="${i===0?'active':''}" aria-label="Slide ${i+1}"></button>`));
+    let current = 0;
+    function showSlide(i){
+      slides.forEach((s,idx)=>s.classList.toggle('active', idx===i));
+      dotsHost.querySelectorAll('button').forEach((d,idx)=>d.classList.toggle('active', idx===i));
+      current = i;
+    }
+    dotsHost.querySelectorAll('button').forEach(d=> d.addEventListener('click', ()=>showSlide(+d.dataset.i)));
+    setInterval(()=> showSlide((current+1)%slides.length), 5000);
+
+    // finance widget on the homepage
+    const $ = id=>document.getElementById(id);
+    function updateFinanceWidget(){
+      const price = +$('fp-price').value, down = +$('fp-down').value, apr = +$('fp-apr').value, term = +$('fp-term').value;
+      $('fp-price-label').textContent = fmtPrice(price);
+      $('fp-down-label').textContent = down+'%';
+      $('fp-apr-label').textContent = apr+'%';
+      $('fp-term-label').textContent = term+' months';
+      const monthly = calcMonthlyPayment(price, down, apr, term);
+      const downAmt = price*(down/100);
+      const loanAmt = price-downAmt;
+      const totalInterest = (monthly*term) - loanAmt;
+      $('fp-monthly').textContent = fmtPrice(Math.round(monthly));
+      $('fp-down-amt').textContent = fmtPrice(Math.round(downAmt));
+      $('fp-loan-amt').textContent = fmtPrice(Math.round(loanAmt));
+      $('fp-interest-amt').textContent = fmtPrice(Math.round(totalInterest));
+    }
+    ['fp-price','fp-down','fp-apr','fp-term'].forEach(id=> $(id).addEventListener('input', updateFinanceWidget));
+    updateFinanceWidget();
+  });
+
+  function goSearch(e){
+    e.preventDefault();
+    const params = new URLSearchParams();
+    const kw = document.getElementById('s-keyword').value.trim();
+    const body = document.getElementById('s-body').value;
+    const price = document.getElementById('s-price').value;
+    const cond = document.getElementById('s-condition').value;
+    if(kw) params.set('q', kw);
+    if(body) params.set('body', body);
+    if(price) params.set('maxPrice', price);
+    if(cond) params.set('condition', cond);
+    location.href = 'inventory.html?' + params.toString();
+    return false;
+  }
+</script>
+</body>
+</html>

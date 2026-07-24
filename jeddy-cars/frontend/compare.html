@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compare Vehicles — Jeddy Cars</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="page-loader"><div class="loader-mark"><svg viewBox="0 0 64 64"><circle class="loader-ring" cx="32" cy="32" r="26"/><circle class="loader-arc" cx="32" cy="32" r="26"/></svg></div><div class="loader-text">Jeddy Cars</div></div>
+<div id="site-nav"></div>
+<main>
+  <section class="page-hero">
+    <div class="container">
+      <div class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span>Compare</span></div>
+      <div class="section-eyebrow">Side by Side</div>
+      <h1 class="section-title">Compare Vehicles</h1>
+    </div>
+  </section>
+  <section class="section-tight">
+    <div class="container" id="compare-wrap"></div>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script>
+function renderCompare(){
+  const ids = AppState.compare;
+  const wrap = document.getElementById('compare-wrap');
+  if(!ids.length){
+    wrap.innerHTML = `<div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">${ICONS.scale}</svg>
+      <p>You haven't added any vehicles to compare yet.</p>
+      <a href="inventory.html" class="btn btn-gold" style="margin-top:16px;">Browse Inventory</a>
+    </div>`;
+    return;
+  }
+  const vs = ids.map(findVehicle).filter(Boolean);
+  const rows = [
+    ['Price', v=>fmtPrice(v.price)],
+    ['Year', v=>v.year],
+    ['Mileage', v=>fmtMileage(v.mileage)],
+    ['Body Type', v=>v.body],
+    ['Condition', v=>v.condition],
+    ['Engine', v=>v.engine],
+    ['Horsepower', v=>v.horsepower+' hp'],
+    ['Drivetrain', v=>v.drivetrain],
+    ['Transmission', v=>v.transmission],
+    ['Fuel Type', v=>v.fuel],
+    ['Exterior', v=>v.exterior],
+    ['Interior', v=>v.interior],
+    ['Est. Monthly', v=>fmtPrice(Math.round(calcMonthlyPayment(v.price,20,6.9,60)))+'/mo'],
+  ];
+  wrap.innerHTML = `<table class="compare-table">
+    <tr><th>Vehicle</th>${vs.map(v=>`<td>
+      <img src="${v.images[0]}" alt="${v.model}">
+      <div style="font-family:'Fraunces',serif; font-size:16px;">${v.brand} ${v.model}</div>
+      <a class="compare-remove" onclick="toggleCompare('${v.id}'); renderCompare();">Remove</a>
+    </td>`).join('')}</tr>
+    ${rows.map(([label,fn])=>`<tr><th>${label}</th>${vs.map(v=>`<td>${fn(v)}</td>`).join('')}</tr>`).join('')}
+    <tr><th></th>${vs.map(v=>`<td><a href="vehicle.html?id=${v.id}" class="btn btn-gold btn-sm">View Details</a></td>`).join('')}</tr>
+  </table>`;
+}
+document.addEventListener('DOMContentLoaded', renderCompare);
+</script>
+</body>
+</html>

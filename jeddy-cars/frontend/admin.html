@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — Jeddy Cars</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="page-loader"><div class="loader-mark"><svg viewBox="0 0 64 64"><circle class="loader-ring" cx="32" cy="32" r="26"/><circle class="loader-arc" cx="32" cy="32" r="26"/></svg></div><div class="loader-text">Jeddy Cars</div></div>
+<div id="site-nav"></div>
+<main>
+  <section class="page-hero">
+    <div class="container">
+      <div class="section-eyebrow">Control Center</div>
+      <h1 class="section-title">Admin Dashboard</h1>
+    </div>
+  </section>
+
+  <section class="section-tight">
+    <div class="container dash-layout">
+      <aside class="dash-side">
+        <a href="#" data-tab="overview" onclick="showAdminTab('overview',this);return false;">Analytics</a>
+        <a href="#" data-tab="vehicles" onclick="showAdminTab('vehicles',this);return false;">Manage Vehicles</a>
+        <a href="#" data-tab="customers" onclick="showAdminTab('customers',this);return false;">Customers</a>
+        <a href="#" data-tab="orders" onclick="showAdminTab('orders',this);return false;">Orders</a>
+        <a href="#" data-tab="bookings" onclick="showAdminTab('bookings',this);return false;">Bookings</a>
+        <a href="#" data-tab="messages" onclick="showAdminTab('messages',this);return false;">Messages</a>
+        <a href="#" data-tab="reviews" onclick="showAdminTab('reviews',this);return false;">Reviews</a>
+        <a href="#" data-tab="reports" onclick="showAdminTab('reports',this);return false;">Inventory Reports</a>
+        <a href="#" onclick="signOut();return false;" style="color:var(--ember-bright); margin-top:12px;">Sign Out</a>
+      </aside>
+      <div id="admin-content"></div>
+    </div>
+  </section>
+</main>
+<div id="site-footer"></div>
+
+<!-- Vehicle Add/Edit modal -->
+<div class="modal-overlay" id="veh-modal">
+  <div class="modal-box" style="max-width:640px;">
+    <button class="modal-close" onclick="closeVehModal()">&times;</button>
+    <h3 class="font-display" style="font-size:20px; margin-bottom:18px;" id="veh-modal-title">Add Vehicle</h3>
+    <form id="veh-form" onsubmit="saveVehicle(event)">
+      <input type="hidden" id="vf-id">
+      <div class="form-row-2">
+        <div class="form-group"><label>Brand</label><input required id="vf-brand" type="text"></div>
+        <div class="form-group"><label>Model</label><input required id="vf-model" type="text"></div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group"><label>Year</label><input required id="vf-year" type="number" min="1990" max="2027"></div>
+        <div class="form-group"><label>Price (USD)</label><input required id="vf-price" type="number" min="0"></div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group"><label>Body Type</label><input id="vf-body" type="text" placeholder="SUV, Sedan, Coupe…"></div>
+        <div class="form-group"><label>Condition</label><select id="vf-condition"><option>New</option><option>Used</option></select></div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group"><label>Mileage</label><input id="vf-mileage" type="number" min="0" value="0"></div>
+        <div class="form-group"><label>Status</label><select id="vf-status"><option value="available">Available</option><option value="reserved">Reserved</option><option value="sold">Sold</option></select></div>
+      </div>
+      <div class="form-group"><label>Image URLs (comma-separated — multi-image gallery)</label><input id="vf-images" type="text" placeholder="https://…, https://…"></div>
+      <div class="form-group"><label>Description</label><textarea id="vf-desc"></textarea></div>
+      <button class="btn btn-gold btn-block" type="submit">Save Vehicle</button>
+    </form>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script>
+if(!AppState.user || AppState.user.role!=='admin'){ location.href = 'login.html'; }
+
+// admin's own copy of the inventory, saved to localStorage so edits stick
+let adminVehicles = Store.get('jc_admin_vehicles', null) || JSON.parse(JSON.stringify(VEHICLES));
+function persistAdminVehicles(){ Store.set('jc_admin_vehicles', adminVehicles); }
+
+const mockCustomers = [
+  { name:"Amaka Obi", email:"amaka.o@mail.com", joined:"2026-02-14", orders:1, spend:44900 },
+  { name:"David Kalu", email:"david.k@mail.com", joined:"2026-03-02", orders:1, spend:108900 },
+  { name:"Tunde Nwosu", email:"tunde.n@mail.com", joined:"2026-04-19", orders:2, spend:141800 },
+  { name:"Grace Adeyemi", email:"grace.a@mail.com", joined:"2026-05-30", orders:0, spend:0 },
+];
+const mockOrdersAdmin = [
+  { id:"ORD-1042", customer:"Amaka Obi", car:"Mercedes-Benz C-Class", status:"Delivered", amount:44900 },
+  { id:"ORD-1051", customer:"David Kalu", car:"Range Rover Sport", status:"Processing", amount:108900 },
+  { id:"ORD-1058", customer:"Tunde Nwosu", car:"BMW M4 Competition", status:"Delivered", amount:96900 },
+  { id:"ORD-1063", customer:"Tunde Nwosu", car:"Toyota Camry", status:"Pending Payment", amount:29800 },
+];
+const mockBookings = [
+  { customer:"Grace Adeyemi", car:"Porsche Cayenne", type:"Test Drive", date:"2026-07-22", status:"Confirmed" },
+  { customer:"Chidi Eze", car:"Tesla Model S", type:"Inspection", date:"2026-07-23", status:"Pending" },
+  { customer:"Amaka Obi", car:"Mercedes-Benz G-Wagon", type:"Test Drive", date:"2026-07-25", status:"Confirmed" },
+];
+const mockMessages = [
+  { name:"Chidi Eze", subject:"Financing", preview:"Can I get a rate estimate for the Model S Plaid?", time:"2h ago" },
+  { name:"Grace Adeyemi", subject:"Vehicle Availability", preview:"Is the Cayenne still available for a test drive Friday?", time:"5h ago" },
+  { name:"Femi Bello", subject:"After-Sales Support", preview:"Following up on my G-Wagon service appointment.", time:"1d ago" },
+];
+const mockReviews = [
+  { name:"Amaka O.", car:"G-Wagon", rating:5, text:"Seamless from reservation to delivery." },
+  { name:"David K.", car:"Range Rover Sport", rating:5, text:"Compare tool saved me a full weekend." },
+  { name:"Tunde N.", car:"BMW M4", rating:4, text:"Great experience, delivery took a day longer than quoted." },
+];
+
+function showAdminTab(tab, el){
+  document.querySelectorAll('.dash-side a').forEach(a=>a.classList.remove('active'));
+  if(el) el.classList.add('active');
+  const host = document.getElementById('admin-content');
+
+  if(tab==='overview'){
+    const revenue = mockOrdersAdmin.reduce((s,o)=>s+o.amount,0);
+    host.innerHTML = `
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-top">Total Revenue</div><div class="kpi-num">${fmtPrice(revenue)}</div><div class="kpi-delta up">▲ 12.4% vs last month</div></div>
+      <div class="kpi-card"><div class="kpi-top">Vehicles Listed</div><div class="kpi-num">${adminVehicles.length}</div><div class="kpi-delta up">▲ 2 new this week</div></div>
+      <div class="kpi-card"><div class="kpi-top">Active Orders</div><div class="kpi-num">${mockOrdersAdmin.filter(o=>o.status!=='Delivered').length}</div><div class="kpi-delta down">▼ 1 vs last week</div></div>
+      <div class="kpi-card"><div class="kpi-top">New Customers</div><div class="kpi-num">${mockCustomers.length}</div><div class="kpi-delta up">▲ 8.1%</div></div>
+    </div>
+    <div class="testimonial-card" style="padding:28px; margin-bottom:24px;">
+      <h4 style="font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-dim); margin-bottom:6px;">Monthly Revenue</h4>
+      <div class="bar-chart">
+        ${[42,55,48,63,71,58,84,90,76,88,95,Math.round(revenue/3000)].map((v,i)=>`<div class="bar" style="height:${Math.min(100,v)}%"><span>$${v}k</span></div>`).join('')}
+      </div>
+      <div style="display:flex; gap:12px; margin-top:4px;">
+        ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map(m=>`<div class="bar-label" style="flex:1;">${m}</div>`).join('')}
+      </div>
+    </div>
+    <h3 class="font-display" style="font-size:18px; margin-bottom:16px;">Recent Orders</h3>
+    <table class="data-table"><tr><th>Order</th><th>Customer</th><th>Vehicle</th><th>Status</th><th>Amount</th></tr>
+      ${mockOrdersAdmin.slice(0,4).map(o=>`<tr><td>${o.id}</td><td>${o.customer}</td><td>${o.car}</td><td><span class="pill ${o.status==='Delivered'?'pill-green':o.status==='Processing'?'pill-gold':'pill-grey'}">${o.status}</span></td><td>${fmtPrice(o.amount)}</td></tr>`).join('')}
+    </table>`;
+  }
+
+  if(tab==='vehicles'){
+    host.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+      <h3 class="font-display" style="font-size:18px;">Manage Vehicles (${adminVehicles.length})</h3>
+      <button class="btn btn-gold btn-sm" onclick="openVehModal()">+ Add Vehicle</button>
+    </div>
+    <table class="data-table"><tr><th>Vehicle</th><th>Year</th><th>Price</th><th>Status</th><th></th></tr>
+      ${adminVehicles.map(v=>`<tr>
+        <td style="display:flex; align-items:center; gap:10px;"><img src="${v.images[0]}" style="width:52px;height:36px;object-fit:cover;border-radius:4px;">${v.brand} ${v.model}</td>
+        <td>${v.year}</td><td>${fmtPrice(v.price)}</td>
+        <td><span class="pill ${v.status==='available'?'pill-green':v.status==='reserved'?'pill-gold':'pill-red'}">${v.status}</span></td>
+        <td style="display:flex; gap:8px;">
+          <button class="icon-sq" onclick="openVehModal('${v.id}')" title="Edit">✎</button>
+          <button class="icon-sq" onclick="deleteVehicle('${v.id}')" title="Delete">🗑</button>
+        </td>
+      </tr>`).join('')}
+    </table>`;
+  }
+
+  if(tab==='customers'){
+    host.innerHTML = `<h3 class="font-display" style="font-size:18px; margin-bottom:16px;">Customers</h3>
+    <table class="data-table"><tr><th>Name</th><th>Email</th><th>Joined</th><th>Orders</th><th>Lifetime Spend</th></tr>
+      ${mockCustomers.map(c=>`<tr><td>${c.name}</td><td>${c.email}</td><td>${c.joined}</td><td>${c.orders}</td><td>${fmtPrice(c.spend)}</td></tr>`).join('')}
+    </table>`;
+  }
+
+  if(tab==='orders'){
+    host.innerHTML = `<h3 class="font-display" style="font-size:18px; margin-bottom:16px;">All Orders</h3>
+    <table class="data-table"><tr><th>Order</th><th>Customer</th><th>Vehicle</th><th>Status</th><th>Amount</th></tr>
+      ${mockOrdersAdmin.map(o=>`<tr><td>${o.id}</td><td>${o.customer}</td><td>${o.car}</td><td><span class="pill ${o.status==='Delivered'?'pill-green':o.status==='Processing'?'pill-gold':'pill-grey'}">${o.status}</span></td><td>${fmtPrice(o.amount)}</td></tr>`).join('')}
+    </table>`;
+  }
+
+  if(tab==='bookings'){
+    host.innerHTML = `<h3 class="font-display" style="font-size:18px; margin-bottom:16px;">Bookings & Inspections</h3>
+    <table class="data-table"><tr><th>Customer</th><th>Vehicle</th><th>Type</th><th>Date</th><th>Status</th></tr>
+      ${mockBookings.map(b=>`<tr><td>${b.customer}</td><td>${b.car}</td><td>${b.type}</td><td>${b.date}</td><td><span class="pill ${b.status==='Confirmed'?'pill-green':'pill-gold'}">${b.status}</span></td></tr>`).join('')}
+    </table>`;
+  }
+
+  if(tab==='messages'){
+    host.innerHTML = `<h3 class="font-display" style="font-size:18px; margin-bottom:16px;">Customer Messages</h3>` +
+      mockMessages.map(m=>`<div class="testimonial-card" style="margin-bottom:10px; padding:18px;">
+        <div style="display:flex; justify-content:space-between;"><strong>${m.name}</strong><span style="color:var(--ink-dim); font-size:12px;">${m.time}</span></div>
+        <div style="color:var(--gold); font-size:12.5px; margin:4px 0;">${m.subject}</div>
+        <p style="color:var(--ink-dim); font-size:14px;">${m.preview}</p>
+      </div>`).join('');
+  }
+
+  if(tab==='reviews'){
+    host.innerHTML = `<h3 class="font-display" style="font-size:18px; margin-bottom:16px;">Customer Reviews</h3>` +
+      mockReviews.map(r=>`<div class="testimonial-card" style="margin-bottom:10px; padding:18px;">
+        <div style="display:flex; justify-content:space-between;"><strong>${r.name}</strong><span class="stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</span></div>
+        <div style="color:var(--ink-dim); font-size:12.5px; margin:4px 0;">${r.car}</div>
+        <p style="font-size:14px;">${r.text}</p>
+      </div>`).join('');
+  }
+
+  if(tab==='reports'){
+    const byBody = {};
+    adminVehicles.forEach(v=> byBody[v.body] = (byBody[v.body]||0)+1);
+    host.innerHTML = `<h3 class="font-display" style="font-size:18px; margin-bottom:16px;">Inventory Reports</h3>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-top">Total Stock</div><div class="kpi-num">${adminVehicles.length}</div></div>
+      <div class="kpi-card"><div class="kpi-top">Available</div><div class="kpi-num">${adminVehicles.filter(v=>v.status==='available').length}</div></div>
+      <div class="kpi-card"><div class="kpi-top">Reserved</div><div class="kpi-num">${adminVehicles.filter(v=>v.status==='reserved').length}</div></div>
+      <div class="kpi-card"><div class="kpi-top">Avg. Price</div><div class="kpi-num">${fmtPrice(Math.round(adminVehicles.reduce((s,v)=>s+v.price,0)/adminVehicles.length))}</div></div>
+    </div>
+    <table class="data-table"><tr><th>Body Type</th><th>Count</th></tr>
+      ${Object.entries(byBody).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join('')}
+    </table>`;
+  }
+}
+
+function openVehModal(id){
+  document.getElementById('veh-form').reset();
+  document.getElementById('vf-id').value = id || '';
+  if(id){
+    const v = adminVehicles.find(x=>x.id===id);
+    document.getElementById('veh-modal-title').textContent = 'Edit Vehicle';
+    document.getElementById('vf-brand').value = v.brand;
+    document.getElementById('vf-model').value = v.model;
+    document.getElementById('vf-year').value = v.year;
+    document.getElementById('vf-price').value = v.price;
+    document.getElementById('vf-body').value = v.body;
+    document.getElementById('vf-condition').value = v.condition;
+    document.getElementById('vf-mileage').value = v.mileage;
+    document.getElementById('vf-status').value = v.status;
+    document.getElementById('vf-images').value = v.images.join(', ');
+    document.getElementById('vf-desc').value = v.description;
+  } else {
+    document.getElementById('veh-modal-title').textContent = 'Add Vehicle';
+  }
+  document.getElementById('veh-modal').classList.add('show');
+}
+function closeVehModal(){ document.getElementById('veh-modal').classList.remove('show'); }
+function saveVehicle(e){
+  e.preventDefault();
+  const id = document.getElementById('vf-id').value;
+  const images = document.getElementById('vf-images').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const data = {
+    brand: document.getElementById('vf-brand').value,
+    model: document.getElementById('vf-model').value,
+    year: +document.getElementById('vf-year').value,
+    price: +document.getElementById('vf-price').value,
+    body: document.getElementById('vf-body').value || 'Sedan',
+    condition: document.getElementById('vf-condition').value,
+    mileage: +document.getElementById('vf-mileage').value,
+    status: document.getElementById('vf-status').value,
+    images: images.length ? images : ["https://commons.wikimedia.org/wiki/Special:FilePath/Mercedes-Benz_C_200_4MATIC_AVANTGARDE_(W206)_front.jpg?width=1200"],
+    description: document.getElementById('vf-desc').value || 'Details coming soon.',
+  };
+  if(id){
+    const idx = adminVehicles.findIndex(x=>x.id===id);
+    adminVehicles[idx] = {...adminVehicles[idx], ...data};
+    toast('Vehicle updated');
+  } else {
+    const newId = (data.brand+'-'+data.model).toLowerCase().replace(/[^a-z0-9]+/g,'-');
+    adminVehicles.push({ id:newId, ...data, fuel:"Petrol", transmission:"Automatic", engine:"—", horsepower:0, drivetrain:"—", exterior:"—", interior:"—", vin:"PENDING", tag:"new", featured:false, bestseller:false, features:[] });
+    toast('Vehicle added to inventory');
+  }
+  persistAdminVehicles();
+  closeVehModal();
+  showAdminTab('vehicles');
+}
+function deleteVehicle(id){
+  if(!confirm('Remove this vehicle from inventory?')) return;
+  adminVehicles = adminVehicles.filter(v=>v.id!==id);
+  persistAdminVehicles();
+  toast('Vehicle removed');
+  showAdminTab('vehicles');
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  const link = document.querySelector('.dash-side a[data-tab="overview"]');
+  showAdminTab('overview', link);
+});
+</script>
+</body>
+</html>

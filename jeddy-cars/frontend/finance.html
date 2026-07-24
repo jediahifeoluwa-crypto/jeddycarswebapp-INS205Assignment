@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Financing — Jeddy Cars</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="page-loader"><div class="loader-mark"><svg viewBox="0 0 64 64"><circle class="loader-ring" cx="32" cy="32" r="26"/><circle class="loader-arc" cx="32" cy="32" r="26"/></svg></div><div class="loader-text">Jeddy Cars</div></div>
+<div id="site-nav"></div>
+<main>
+  <section class="page-hero">
+    <div class="container">
+      <div class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span>Financing</span></div>
+      <div class="section-eyebrow">Own It Sooner</div>
+      <h1 class="section-title">Financing & Loan Calculator</h1>
+    </div>
+  </section>
+
+  <section class="section-tight">
+    <div class="container">
+      <div class="finance-card reveal">
+        <div>
+          <div class="field" style="margin-bottom:20px;">
+            <label>Select a Vehicle (optional)</label>
+            <select id="fc-vehicle"><option value="">Custom amount</option></select>
+          </div>
+          <div class="slider-row">
+            <div class="row-top"><span>Vehicle Price</span><strong id="fc-price-label">$75,000</strong></div>
+            <input type="range" id="fc-price" min="15000" max="250000" step="1000" value="75000">
+          </div>
+          <div class="slider-row">
+            <div class="row-top"><span>Down Payment</span><strong id="fc-down-label">20% · $15,000</strong></div>
+            <input type="range" id="fc-down" min="0" max="70" step="1" value="20">
+          </div>
+          <div class="slider-row">
+            <div class="row-top"><span>Interest Rate (APR)</span><strong id="fc-apr-label">6.9%</strong></div>
+            <input type="range" id="fc-apr" min="1.9" max="18" step="0.1" value="6.9">
+          </div>
+          <div class="slider-row">
+            <div class="row-top"><span>Loan Term</span><strong id="fc-term-label">60 months</strong></div>
+            <input type="range" id="fc-term" min="12" max="84" step="6" value="60">
+          </div>
+        </div>
+        <div class="finance-result">
+          <div class="amount" id="fc-monthly">$0</div>
+          <div class="label">Estimated Monthly Payment</div>
+          <div class="finance-breakdown">
+            <div>Loan Amount<b id="fc-loan">$0</b></div>
+            <div>Total Interest<b id="fc-interest">$0</b></div>
+            <div>Total Payback<b id="fc-total">$0</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-tight" style="border-top:1px solid var(--hairline);">
+    <div class="container" style="max-width:640px;">
+      <div class="section-head reveal" style="display:block;">
+        <div class="section-eyebrow">Next Step</div>
+        <h2 class="section-title">Submit a Finance Application</h2>
+        <p class="section-desc">No obligation — a finance specialist will confirm your real rate within one business day.</p>
+      </div>
+      <form class="auth-card reveal" onsubmit="submitFinanceApp(event)">
+        <div class="form-row-2">
+          <div class="form-group"><label>Full Name</label><input required type="text"></div>
+          <div class="form-group"><label>Email</label><input required type="email"></div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Phone</label><input required type="tel"></div>
+          <div class="form-group"><label>Employment Status</label>
+            <select><option>Employed</option><option>Self-Employed</option><option>Business Owner</option><option>Retired</option></select>
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Monthly Income Range</label>
+            <select><option>Under $3,000</option><option>$3,000–$6,000</option><option>$6,000–$10,000</option><option>$10,000+</option></select>
+          </div>
+          <div class="form-group"><label>Preferred Vehicle</label>
+            <select id="fc-app-vehicle"><option value="">Not sure yet</option></select>
+          </div>
+        </div>
+        <div class="form-group"><label>Additional Notes</label><textarea placeholder="Trade-in details, timeline, questions…"></textarea></div>
+        <button class="btn btn-gold btn-block" type="submit">Submit Application</button>
+      </form>
+    </div>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', ()=>{
+  const vehSel = document.getElementById('fc-vehicle');
+  const appSel = document.getElementById('fc-app-vehicle');
+  VEHICLES.forEach(v=>{
+    const opt = `<option value="${v.id}">${v.brand} ${v.model} — ${fmtPrice(v.price)}</option>`;
+    vehSel.insertAdjacentHTML('beforeend', opt);
+    appSel.insertAdjacentHTML('beforeend', opt);
+  });
+  const $ = id=>document.getElementById(id);
+  vehSel.addEventListener('change', ()=>{
+    const v = findVehicle(vehSel.value);
+    if(v){ $('fc-price').value = v.price; }
+    update();
+  });
+  function update(){
+    const price = +$('fc-price').value, down = +$('fc-down').value, apr = +$('fc-apr').value, term = +$('fc-term').value;
+    $('fc-price-label').textContent = fmtPrice(price);
+    const downAmt = Math.round(price*(down/100));
+    $('fc-down-label').textContent = `${down}% · ${fmtPrice(downAmt)}`;
+    $('fc-apr-label').textContent = apr+'%';
+    $('fc-term-label').textContent = term+' months';
+    const monthly = calcMonthlyPayment(price, down, apr, term);
+    const loanAmt = price-downAmt;
+    const totalPayback = monthly*term;
+    const totalInterest = totalPayback - loanAmt;
+    $('fc-monthly').textContent = fmtPrice(Math.round(monthly));
+    $('fc-loan').textContent = fmtPrice(Math.round(loanAmt));
+    $('fc-interest').textContent = fmtPrice(Math.round(totalInterest));
+    $('fc-total').textContent = fmtPrice(Math.round(totalPayback));
+  }
+  ['fc-price','fc-down','fc-apr','fc-term'].forEach(id=>$(id).addEventListener('input', update));
+  update();
+});
+function submitFinanceApp(e){
+  e.preventDefault();
+  toast('Application submitted — a specialist will reach out within 1 business day.');
+  e.target.reset();
+}
+</script>
+</body>
+</html>
